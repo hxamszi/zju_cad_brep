@@ -1,0 +1,249 @@
+<!--
+External packages used in this project:
+THREE.js
+THREE.MeshLine.js	https://github.com/spite/THREE.MeshLine
+jQuery
+jQueryUI
+jsTree
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>B-rep CAD Prototype System</title>
+	<link rel="stylesheet" href="./js/jquery-ui-1.12.1/jquery-ui.css">
+	<link rel="stylesheet" href="home.css">
+	<link rel="stylesheet" href="./js/jstree/themes/default/style.css">
+	<script src="./js/jquery-ui-1.12.1/external/jquery/jquery.js"></script>
+	<script src="./js/jquery-ui-1.12.1/jquery-ui.js"></script>
+	<script src="./js/jstree/jstree.js"></script>
+</head>
+<body>
+	<!-- main UI -->
+	<div class="grid-container" id="mainGridContainer">
+		<canvas id="c"></canvas>
+		<div class="btn-group" id="opBtnGroup">
+			<button id="btnMev" class="ui-state-disabled">mev</button>
+			<button id="btnMef" class="ui-state-disabled">mef</button>
+			<button id="btnMvfs" class="ui-state-disabled">mvfs</button>
+			<button id="btnKemr" class="ui-state-disabled">kemr</button>
+			<button id="btnKfmrh" class="ui-state-disabled">kfmrh</button>
+			<button id="btnSemv" class="ui-state-disabled">semv</button>
+			<button id="btnSweep" class="ui-state-disabled">sweep</button>
+			<button id="btnBatchRun" class="ui-state-disabled">batch run</button>
+		</div>
+		<div id="brepTreeViewWrapper">
+			<div id="brepTreeViewTitle">
+				<b>B-rep Tree View</b>
+			</div>
+			<div id="brepTreeViewInnerWrapper">
+				<div id="brepTreeView"></div><!-- controlled by jstree widget -->
+			</div>
+		</div>
+		<div id="msgBoxWrapper">
+			<div id="msgBoxTitle">
+				<b>Message Box</b>
+<!--				<button id="btnTest">test</button>-->
+			</div>
+			<div id="msgBox"></div><!-- system log goes here -->
+		</div>
+	</div>
+
+	<!-- dialogs -->
+	<!-- reference:
+		https://jqueryui.com/dialog/#modal-form
+	-->
+
+	<div hidden class="ui-dialog" id="dialog-mvfs" title="mvfs (make a Vertex, a Face and a Solid)">
+		<p class="validateTips">Please enter the coordinates of the new vertex.</p>
+		<form>
+			<fieldset>
+				<p>
+					<label for="dialog-mvfs-x">x</label>
+					<input type="text" name="dialog-mvfs-x" id="dialog-mvfs-x" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-mvfs-y">y</label>
+					<input type="text" name="dialog-mvfs-y" id="dialog-mvfs-y" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-mvfs-z">z</label>
+					<input type="text" name="dialog-mvfs-z" id="dialog-mvfs-z" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+
+				<!-- Allow form submission with keyboard without duplicating the dialog button -->
+				<input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+			</fieldset>
+		</form>
+	</div>
+
+	<div hidden class="ui-dialog" id="dialog-mev" title="mev (make an Edge connecting a new Vertex and an existing Vertex)">
+		<p class="validateTips">Please specify the existing vertex and loop, and enter the coordinates of the new vertex.</p>
+		<form>
+			<fieldset>
+				<p>
+					<label for="dialog-mev-v-id">id of existing vertex</label>
+					<input type="text" name="dialog-mev-v-id" id="dialog-mev-v-id" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-mev-lp-id">id of existing loop</label>
+					<input type="text" name="dialog-mev-lp-id" id="dialog-mev-lp-id" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-mev-x">x of new vertex</label>
+					<input type="text" name="dialog-mev-x" id="dialog-mev-x" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-mev-y">y of new vertex</label>
+					<input type="text" name="dialog-mev-y" id="dialog-mev-y" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-mev-z">z of new vertex</label>
+					<input type="text" name="dialog-mev-z" id="dialog-mev-z" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+
+				<!-- Allow form submission with keyboard without duplicating the dialog button -->
+				<input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+			</fieldset>
+		</form>
+	</div>
+
+	<div hidden class="ui-dialog" id="dialog-mef" title="mef (make an Edge and a Face)">
+		<p class="validateTips">Please specify an existing loop and two existing vertices on the loop.</p>
+		<form>
+			<fieldset>
+				<p>
+					<label for="dialog-mef-v1-id">id of the 1st existing vertex</label>
+					<input type="text" name="dialog-mef-v1-id" id="dialog-mef-v1-id" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-mef-v2-id">id of the 2nd existing vertex</label>
+					<input type="text" name="dialog-mef-v2-id" id="dialog-mef-v2-id" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-mef-lp-id">id of existing loop</label>
+					<input type="text" name="dialog-mef-lp-id" id="dialog-mef-lp-id" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+
+				<!-- Allow form submission with keyboard without duplicating the dialog button -->
+				<input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+			</fieldset>
+		</form>
+	</div>
+
+	<div hidden class="ui-dialog" id="dialog-kemr" title="kemr (kill an Edge to make a Ring)">
+		<p class="validateTips">Please specify an existing edge whose two half-edges are in the same loop.</p>
+		<form>
+			<fieldset>
+				<p>
+					<label for="dialog-kemr-e-id">id of existing edge</label>
+					<input type="text" name="dialog-kemr-e-id" id="dialog-kemr-e-id" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<!-- Allow form submission with keyboard without duplicating the dialog button -->
+				<input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+			</fieldset>
+		</form>
+	</div>
+
+	<div hidden class="ui-dialog" id="dialog-kfmrh" title="kfmrh (kill a Face to make a Ring and a Handle)">
+		<p class="validateTips">Please specify two existing faces that lie on the same plane.</p>
+		<form>
+			<fieldset>
+				<p>
+					<label for="dialog-kfmrh-f1-id">id of 1st existing face</label>
+					<input type="text" name="dialog-kfmrh-f1-id" id="dialog-kfmrh-f1-id" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-kfmrh-f2-id">id of 2nd existing face</label>
+					<input type="text" name="dialog-kfmrh-f2-id" id="dialog-kfmrh-f2-id" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<!-- Allow form submission with keyboard without duplicating the dialog button -->
+				<input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+			</fieldset>
+		</form>
+	</div>
+
+	<div hidden class="ui-dialog" id="dialog-semv" title="semv (split an Edge with a new Vertex)">
+		<p class="validateTips">Please specify an existing Edge and the coordinates of the new Vertex.</p>
+		<form>
+			<fieldset>
+				<p>
+					<label for="dialog-semv-e-id">id of existing edge</label>
+					<input type="text" name="dialog-semv-e-id" id="dialog-semv-e-id" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-semv-x">x of new vertex</label>
+					<input type="text" name="dialog-semv-x" id="dialog-semv-x" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-semv-y">y of new vertex</label>
+					<input type="text" name="dialog-semv-y" id="dialog-semv-y" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-semv-z">z of new vertex</label>
+					<input type="text" name="dialog-semv-z" id="dialog-semv-z" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<!-- Allow form submission with keyboard without duplicating the dialog button -->
+				<input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+			</fieldset>
+		</form>
+	</div>
+
+	<div hidden class="ui-dialog" id="dialog-sweep" title="sweep (move a bottom surface along a vector to produce a 3D entity)">
+		<p class="validateTips">Please specify an existing face and the movement vector.</p>
+		<form>
+			<fieldset>
+				<p>
+					<label for="dialog-sweep-f-id">id of existing face (bottom surface)</label>
+					<input type="text" name="dialog-sweep-f-id" id="dialog-sweep-f-id" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-sweep-x">x of movement vector</label>
+					<input type="text" name="dialog-sweep-x" id="dialog-sweep-x" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-sweep-y">y of movement vector</label>
+					<input type="text" name="dialog-sweep-y" id="dialog-sweep-y" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<p>
+					<label for="dialog-sweep-z">z of movement vector</label>
+					<input type="text" name="dialog-sweep-z" id="dialog-sweep-z" value="0" class="text ui-widget-content ui-corner-all">
+				</p>
+				<!-- Allow form submission with keyboard without duplicating the dialog button -->
+				<input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+			</fieldset>
+		</form>
+	</div>
+
+	<div hidden class="ui-dialog" id="dialog-batch-run" title="Run commands">
+		<p class="validateTips">Please enter Euler operations, one per line. Parameters should be separated by spaces.</p>
+		<form>
+			<fieldset>
+				<p>
+					<textarea spellcheck="false" name="dialog-batch-run-commands" id="dialog-batch-run-commands" class="text ui-widget-content ui-corner-all"></textarea>
+				</p>
+				<button id="btnBatchRun_clear">Clear</button>
+<!--				<button id="btnBatchRun_testcase_1">Testcase 1</button>-->
+<!--				<button id="btnBatchRun_testcase_2">Testcase 2</button>-->
+<!--				<button id="btnBatchRun_testcase_3">Testcase 3</button>-->
+<!--				<button id="btnBatchRun_testcase_4">Testcase 4</button>-->
+				<!-- Allow form submission with keyboard without duplicating the dialog button -->
+				<input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+			</fieldset>
+		</form>
+	</div>
+
+</body>
+<!-- <script type="module" src="js/main.js"></script> -->
+<script src="./js/threejs/r119/build/three.js"></script>
+<script src="./js/threejs/r119/examples/js/controls/OrbitControls.js"></script>
+<script src="./js/threejs/THREE.MeshLine.js"></script>
+<script src="./js/threejs_helper.js"></script>
+<script src="./js/brep.js"></script>
+<script src="./js/brep_tree_view.js"></script>
+<script src="./js/dialog_manager.js"></script>
+<script src="./js/button_manager.js"></script>
+<script src="./js/main.js"></script>
+
+</html>
